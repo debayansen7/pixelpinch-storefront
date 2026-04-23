@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { useDropzone, FileRejection, DropEvent } from "react-dropzone";
 import { siteContent } from "../../data/content";
+import { HowitWorks } from "../../components/HowitWorks";
 
 export default function ConvertionPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -167,6 +168,11 @@ export default function ConvertionPage() {
           </div>
         </div>
       </div>
+
+      <br />
+      <br />
+
+      <HowitWorks {...siteContent.home.howItWorks} />
     </main>
   );
 }

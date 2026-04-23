@@ -4,7 +4,7 @@ export const siteContent = {
     description: "Welcome to the Pixel Pinch storefront",
   },
   navbar: {
-    logo: "PixelPinch",
+    logo: "PixelPinch.",
     links: [
       { label: "Home", href: "/" },
       { label: "Products", href: "/products" },

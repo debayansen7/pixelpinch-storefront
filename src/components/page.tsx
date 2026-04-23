@@ -1,7 +1,6 @@
-import Link from "next/link";
 import ImageCompareSlider from "../components/ImageCompareSlider";
 import { siteContent } from "../data/content";
-import { HowitWorks } from "../components/HowitWorks";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -51,7 +50,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* How it Works Section
+      {/* How it Works Section */}
       <section className="bg-white/60 backdrop-blur-md rounded-3xl p-8 md:p-16 border border-white/50 shadow-sm">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
@@ -80,23 +79,21 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-      </section> */}
-
-      <HowitWorks {...siteContent.home.howItWorks} />
+      </section>
 
       {/* CTA Section */}
       <section className="text-center py-12 md:py-20">
         <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
-          {siteContent.home.cta.title}
+          {siteContent.home.hero.title}
         </h2>
         <p className="text-xl text-gray-700 mb-10 max-w-2xl mx-auto font-medium">
-          {siteContent.home.cta.description}
+          {siteContent.home.hero.descriptionPre}
         </p>
         <Link
-          href={siteContent.home.cta.buttonLink}
+          href="/shop"
           className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-4 px-10 rounded-full transition-transform hover:scale-105 shadow-xl shadow-indigo-600/20"
         >
-          {siteContent.home.cta.buttonText}
+          Get Started Now
         </Link>
       </section>
     </main>
