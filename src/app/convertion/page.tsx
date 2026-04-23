@@ -1,178 +1,165 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { useDropzone, FileRejection, DropEvent } from "react-dropzone";
-import { siteContent } from "../../data/content";
-import { HowitWorks } from "../../components/HowitWorks";
+import { useState, useRef } from "react";
+import Link from "next/link";
 
 export default function ConvertionPage() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState("webp");
-  const [quality, setQuality] = useState(80);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertedUrl, setConvertedUrl] = useState<string | null>(null);
+  const [convertedSize, setConvertedSize] = useState<number | null>(null);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles((prev) => [...prev, ...acceptedFiles]);
-  }, []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/*": [".jpeg", ".jpg", ".png", ".webp", ".gif"],
-    },
-  });
+  // Handle file selection via button
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setConvertedUrl(null);
+    }
+  };
 
+  // Handle drag and drop
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+      setConvertedUrl(null);
+    }
+  };
+
+  // API-Based Compression Logic
   const handleConvert = async () => {
-    if (files.length === 0) return;
-    setIsProcessing(true);
+    if (!file) return;
+    setIsConverting(true);
 
-    // Logic to trigger PixelPinch Conversion API would go here
-    console.log("Converting files to:", format, "with quality:", quality);
+    try {
+      const formData = new FormData();
+      // Note: "file" is the standard key. If your Render backend expects
+      // something like "image" or "upload", change the string below!
+      formData.append("image", file);
+      formData.append("format", format);
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      alert("Conversion started! (API Integration point)");
-    }, 1500);
+      const response = await fetch(
+        "https://pixel-pinch.onrender.com/optimize",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      setConvertedUrl(URL.createObjectURL(blob));
+      setConvertedSize(blob.size);
+    } catch (error) {
+      console.error("Conversion failed:", error);
+      alert("Failed to compress the image. Check the console for details.");
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
-          Convert Your Images
-        </h1>
-        <p className="text-gray-600">
-          Upload, resize, and optimize in seconds.
-        </p>
-      </div>
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="bg-white/60 backdrop-blur-md rounded-3xl p-8 md:p-12 shadow-sm border border-white/50">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+            Compress Your Images
+          </h1>
+          <p className="text-lg text-gray-700 font-medium">
+            Powered by the PixelPinch API for lightning-fast, high-quality cloud
+            compression.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Upload Area */}
-        <div className="lg:col-span-2 space-y-6">
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer transition-colors
-              ${isDragActive ? "border-indigo-500 bg-indigo-50" : "border-gray-300 bg-white/50 hover:border-indigo-400"}`}
-          >
-            <input {...getInputProps()} />
-            <div className="text-5xl mb-4">📸</div>
-            <p className="text-lg font-medium text-gray-700">
-              {isDragActive
-                ? "Drop files here..."
-                : "Drag & drop images, or click to select"}
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Supports PNG, JPG, WebP, GIF
-            </p>
+        {/* Upload Area */}
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-indigo-300 rounded-2xl bg-white/50 p-12 text-center hover:bg-white/80 transition-colors cursor-pointer group shadow-inner mb-8"
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-sm">
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {file ? file.name : "Drag & Drop images here"}
+          </h3>
+          <p className="text-gray-500 mb-6">
+            {file
+              ? `Original size: ${formatBytes(file.size)}`
+              : "or click to browse your files"}
+          </p>
+        </div>
+
+        {/* Settings & Action Area */}
+        <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-white/40 p-6 rounded-2xl border border-white/50 shadow-sm">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <label className="font-semibold text-gray-800 whitespace-nowrap">
+              Output Format:
+            </label>
+            <select
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              className="bg-white/80 border border-gray-200 text-gray-800 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto font-medium"
+            >
+              <option value="webp">WebP (Recommended)</option>
+              <option value="jpeg">JPEG (Standard)</option>
+              <option value="png">PNG (Lossless)</option>
+            </select>
           </div>
 
-          {files.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="font-bold mb-4">
-                Selected Files ({files.length})
-              </h3>
-              <ul className="space-y-2 max-h-60 overflow-y-auto">
-                {files.map((file, idx) => (
-                  <li
-                    key={idx}
-                    className="flex justify-between text-sm bg-gray-50 p-2 rounded"
-                  >
-                    <span className="truncate max-w-[200px]">{file.name}</span>
-                    <span className="text-gray-400">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {convertedUrl ? (
+            <a
+              href={convertedUrl}
+              download={`compressed-image.${format}`}
+              className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-colors text-center"
+            >
+              Download ({formatBytes(convertedSize || 0)})
+            </a>
+          ) : (
+            <button
+              onClick={handleConvert}
+              disabled={!file || isConverting}
+              className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-colors"
+            >
+              {isConverting ? "Compressing..." : "Start Compression"}
+            </button>
           )}
         </div>
-
-        {/* Right: Settings & Action */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Target Format
-              </label>
-              <select
-                value={format}
-                onChange={(e) => setFormat(e.target.value)}
-                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-                <option value="webp">WebP (Recommended)</option>
-                <option value="png">PNG</option>
-                <option value="jpg">JPEG</option>
-                <option value="gif">GIF</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="flex justify-between mb-2">
-                <label className="text-sm font-bold text-gray-700">
-                  Quality
-                </label>
-                <span className="text-sm font-medium text-indigo-600">
-                  {quality}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="100"
-                value={quality}
-                onChange={(e) => setQuality(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-              />
-            </div>
-
-            <div className="pt-4">
-              <button
-                onClick={handleConvert}
-                disabled={files.length === 0 || isProcessing}
-                className={`w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg
-                  ${
-                    files.length === 0 || isProcessing
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]"
-                  }`}
-              >
-                {isProcessing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  "Convert Now"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
-
-      <br />
-      <br />
-
-      <HowitWorks {...siteContent.home.howItWorks} />
     </main>
   );
 }
