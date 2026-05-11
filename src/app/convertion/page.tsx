@@ -65,7 +65,7 @@ function ImageConversionContent() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
       formData.append("format", format);
 
       // Update the URL to point to your actual backend API fetch

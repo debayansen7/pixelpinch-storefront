@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, Suspense } from "react";
 import Image from "next/image";
 import Spinner from "../../components/Spinner";
 import { API_ENDPOINTS } from "../../data/api";
 
-export default function ThumbnailGeneratorPage() {
+function ThumbnailGeneratorContent() {
   const [file, setFile] = useState<File | null>(null);
   const [width, setWidth] = useState("250");
   const [height, setHeight] = useState("250");
@@ -53,7 +53,7 @@ export default function ThumbnailGeneratorPage() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
       formData.append("width", width);
       formData.append("height", height);
       formData.append("fit", fit);
@@ -251,5 +251,19 @@ export default function ThumbnailGeneratorPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ThumbnailGeneratorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center py-20">
+          <Spinner className="animate-spin h-8 w-8 text-indigo-600" />
+        </div>
+      }
+    >
+      <ThumbnailGeneratorContent />
+    </Suspense>
   );
 }
