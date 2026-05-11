@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_ENDPOINTS } from "../../data/api";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -16,11 +18,46 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app this would POST to an API
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
+    // console.log("Form submitted:", formData);
+
+    // https://formspree.io/f/mbdwqpjv
+    const data = {
+      name: formData.name,
+      email: formData.email,
+      message: formData.message,
+    };
+
+    try {
+      const response = await fetch(API_ENDPOINTS.FORMSPREE, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        setStatus("SUCCESS");
+        setFormData({
+          name: "",
+          email: "",
+          message: "",
+        }); // Clear the form
+        setTimeout(() => {
+          setStatus("");
+        }, 3000);
+      } else {
+        setStatus("ERROR");
+      }
+    } catch (error) {
+      setStatus("ERROR");
+    }
+
+    // setSubmitted(true);
   };
 
   return (
@@ -32,8 +69,8 @@ export default function ContactPage() {
             Get in <span className="text-indigo-600">Touch</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            Have feedback on PixelSqueez? Found a bug? Or just want to say
-            hi? We&apos;d love to hear from you — drop us a message below.
+            Have feedback on PixelSqueez? Found a bug? Or just want to say hi?
+            We&apos;d love to hear from you — drop us a message below.
           </p>
         </div>
 
@@ -49,9 +86,9 @@ export default function ContactPage() {
                 <h3 className="text-xl font-bold">We&apos;re friendly!</h3>
               </div>
               <p className="text-indigo-100 leading-relaxed">
-                Whether it&apos;s a feature request, a partnership idea, or
-                just a quick &quot;hello&quot; — we read every single message
-                and try to respond within 24 hours.
+                Whether it&apos;s a feature request, a partnership idea, or just
+                a quick &quot;hello&quot; — we read every single message and try
+                to respond within 24 hours.
               </p>
             </div>
 
@@ -63,9 +100,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 mb-1">Email Us</h4>
-                  <p className="text-gray-600 text-sm">
-                    hello@pixelsqueez.com
-                  </p>
+                  <p className="text-gray-600 text-sm">hello@pixelsqueez.com</p>
                 </div>
               </div>
             </div>
